@@ -13,3 +13,25 @@ There are two main scripts which do all of the heavy lifting.
 --
 #Running the Scripts
 ##Running the collectdata script
+
+The first step is to look through the datastorage and pics directories to make sure they don't contain any data.  This probably should just be added to the script.
+```
+ubuntu:~$ cd IRLLibs/datastorage/
+ubuntu:~/IRLLibs/datastorage$ ls
+ubuntu:~/IRLLibs/datastorage$ cd pics/
+ubuntu:~/IRLLibs/datastorage/pics$ ls
+ubuntu:~/IRLLibs/datastorage/pics$ cd ../..
+```
+Once you have verified there is no old-data you want to get rid of, then begin running the script.
+
+```
+ubuntu:~/IRLLibs$ ./collectdata
+```
+
+You will be prompted with a bunch of questions that ask how you want to view the data.  Just type in "yes" or "no" as a response.
+
+The program will notify you that data is being collected.  To end the collection of all data, type "0" into the terminal and hit enter.
+
+```
+ubuntu:~/IRLLibs$ 0
+```
