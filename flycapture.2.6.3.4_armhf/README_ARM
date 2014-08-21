@@ -1,0 +1,40 @@
+FlyCapture2 ARM README
+
+1) Overview
+
+FlyCapture2 has been tested on a pandabard which is available from www.pandaboard.org.  FlyCapture2 ARM should also work on other TI OMAP hardware such as the beagleboard.  The library and all its dependencies have been compiled using the CodeSourcery cross compiler.  This readme will not go in too much detail on how to configure an OMAP device and how to load a linux operating system on it.  It will concentrate on installation of the FlyCapture2 library.
+
+2) Prerequisites
+
+* Pandaboard or other OMAP device (recommended is a pandaboard at www.pandaboard.org)
+* Linux distribution on the Pandaboard (recommended is ubunut 11.04 at https://wiki.ubuntu.com/ARM/OmapNetbook)
+* A PGR usb Camera
+* A powered USB hub.  The pandaboard does not provide enough power to operate the camera.
+
+3) Installation
+
+	1. Copy your flycapture-<version>_arm.tar.gz package on a network or usb drive and copy it to a location on the pandaboard.
+	2. untar the installation package:
+		> tar xvfz flycapture-<version>_arm.tar.gz
+	3. copy all libraries to system folders:
+		> cd flycapture-<version>_arm/lib
+		> sudo cp libflycapture.so* /usr/lib 
+	4. configure permissions to run PGR cameras:
+		> sudo sh flycap2-conf
+	5. follow the instructions that the script takes you through
+	6. Restart your board.
+	
+4) Running FC2 Examples
+
+You should be able to go into the flycapture-<version>_arm/bin folder where you extracted the package and launch any of the examples.  They will run and grab some images but will error out when trying to convert between image formats.  In the full release versions of FlyCapture2 ARM we will provide examples that run fully but due to the fact that there is no IPP availability on ARM the image conversions will not work in the current state of the library.  Also there will be no AVI saving in this version of the library.
+
+5) Compiling software against flycapture. 
+
+There are a number of ways you can build your software to run on an OMAP board with flycapture.
+	1. Build software right on the board using gnu compiler tools by installing in the least the build-essentials package from ubuntu repository.
+	2. Use a cross compiler to build for the target architecture.  One such cross compiler that works well is CodeSourcery.
+	3. Set up an ARM emulator using QEmu and install ubuntu on it.  Then build your software on the virtual machine.
+
+
+
+

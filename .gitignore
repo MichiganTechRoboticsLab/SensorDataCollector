@@ -1,0 +1,73 @@
+data_storage
+
+# Created by http://www.gitignore.io
+
+### C ###
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+
+### C++ ###
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+### Kate ###
+# Swap Files #
+.*.kate-swp
+.swp.*
+
+
+### Linux ###
+*~
+
+# KDE directory preferences
+.directory
+
+!flycapture.2.6.3.4_armhf/lib/*.so*
+!flycapture.2.6.3.4_armhf/lib/C/*.so*

@@ -1,0 +1,2 @@
+gcc -Wall -I/usr/local/include -c example.c   
+gcc -L/usr/local/lib example.o -lgsl -lgslcblas -lm    

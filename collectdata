@@ -1,0 +1,129 @@
+#!/bin/bash
+
+#This script will allow you to collect Lidar, image, and vector-nav data.
+
+#This defines the folder and name of the csv file for the LIDAR
+#it must take the following format "/another/random/dir/somename.csv" <- WITH QUOTATIONS
+LIDARLOC="data_storage/lidar_data.csv"
+
+#this defines the folder where the pictures are located,
+#it must take the following format "/some/random/dir/"
+PICLOC="/home/ubuntu/IRLLibs/data_storage/pics/"
+
+#this defines the folder whwere the vector-nav data is being helod
+#it must take the following
+VNLOC="/home/ubuntu/IRLLibs/data_storage/vn.csv"
+
+#DO NOT EDIT ANYTHING BELOW THE BIG DOUBLE LINES UNLESS YOU KNOW WHAT YOU ARE DOING
+
+#That being said, if you know what you're doing then you should probably
+#...make it nicer.  This was my first ever large bash script. :-)
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+HELP="Cmd ... Explanation\n0 ..... kill all processes, exit script\n1 ..... kill LIDAR\n2 ..... kill camera\n3 ..... kill VectorNav\n4 ..... print help"
+
+echo -e "Welcome to the Intelligent Robotics Laboratory Datalogger!\nThis will currently log the Lidar and the Camera at the same time.\n"
+
+echo -e "Would you like to collect LIDAR data? ( type 'yes' if so, otherwise type anything else )"
+read cmdLDR
+
+if [ "$cmdLDR" = "yes" ]; then
+    echo -e "Would you like to display the LIDAR?\n*This may slow data collection"
+    read dispLDR
+fi
+
+if [ "$dispLDR" = "yes" ]; then
+    dispLDR="-d"; 
+else
+    dispLDR="";
+fi
+
+echo "$dispLDR"
+
+echo -e "\nWould you like to collect image data? ( type 'yes' if so, otherwise type anything else )"
+read cmdIMG
+
+if [ "$cmdIMG" = "yes" ]; then
+    echo -e "Would you like to display the image data?\n*This may slow data collection"
+    read dispIMG
+fi
+
+
+echo -e "\nWould you like to collect VectorNav data? ( type 'yes' if so, otherwise type anything else )"
+read cmdVN
+
+# trap ctrl-c so processes don't hangup
+trap ctrlc INT
+
+function ctrlc() {
+	kill $(pidof LIDAR_OMG)
+	kill $(pidof CustomImageEx)
+	kill $(pidof main)
+	exit 1
+}
+
+TIME=5
+echo -e "Data collection commencing\n"
+for i in {5..1}
+do
+	echo -e "$i"
+	sleep 1
+done
+echo -e "Data collection has begun\n"
+
+if [ "$cmdLDR" = "yes" ]; then
+    echo -e "collecting LIDAR Data\n"
+    echo "Display tag: $dispLDR"
+    /home/ubuntu/IRLLibs/urg_library-1.1.3/samples/c/LIDAR_OMG ${dispLDR} > ${LIDARLOC} &
+fi
+
+if [ "$cmdIMG" = "yes" ]; then
+    echo -e "collecting image data\n"
+    /home/ubuntu/IRLLibs/flycapture.2.6.3.4_armhf/bin/CustomImageEx ${PICLOC} &> ${PICLOC}caminfo &
+fi
+
+if [ "$cmdVN" = "yes" ]; then
+    echo -e "collecting vector-nav data\n"
+    /home/ubuntu/IRLLibs/vnccpplib-0.2.3/samples/vn200_linux/main > ${VNLOC} &
+fi
+
+echo -e "$HELP"
+
+ps
+
+if [ "$dispIMG" = "yes" ]; then
+    sleep 2
+    /home/ubuntu/IRLLibs/display_scripts/ImageViewer.py &
+fi
+
+while [ 1 ]; do
+    read cmd
+
+    if [ \( "$cmd" -eq 1 \) -o \( "$cmd" -eq 0 \) ]; then
+        echo "killing lidar"
+        kill $(pidof LIDAR_OMG)
+        echo -e "lidar killed\n"
+    fi
+
+    if [ \( "$cmd" -eq 2 \) -o \( "$cmd" -eq 0 \) ]; then
+        echo "killing camera"
+        kill $(pidof CustomImageEx)
+        kill `pidof python`
+        echo -e "camera killed\n"
+    fi
+
+    if [ \( "$cmd" -eq 3 \) -o \( "$cmd" -eq 0 \) ]; then
+        echo "killing vector nav"
+        kill $(pidof main)
+        echo -e "vector nav killed\n"
+    fi
+
+    if [ "$cmd" -eq 0 ]; then
+        echo "Thank you for using the IRL Data-logger!"
+        break
+    fi
+
+    if [ "$cmd" -eq 4 ]; then
+        echo -e $HELP
+    fi
+done
