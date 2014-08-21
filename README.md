@@ -52,3 +52,5 @@ ubuntu:~/IRLLibs/datastorage/pics$ ls
 ubuntu:~/IRLLibs/datastorage/pics$ eog ./*.bmp &
 ubuntu:~/IRLLibs/datastorage/pics$ cd ../..
 ```
+##Moving the data to an SD card (using the cleanup script)
+Now that you've collected some data, we need to move it onto the SD card.
