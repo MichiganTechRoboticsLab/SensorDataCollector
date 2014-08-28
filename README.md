@@ -54,3 +54,15 @@ ubuntu:~/IRLLibs/datastorage/pics$ cd ../..
 ```
 ##Moving the data to an SD card (using the cleanup script)
 Now that you've collected some data, we need to move it onto the SD card.
+
+first, cd into the datastorage and pics directories and make sure all the files you want are there.  You should find  vn.csv, lidar-data.csv and the pics directory should contains all of your pictures.  Once you find everything, head back up to the IRLLibs directory
+```
+ubuntu:~$ cd IRLLibs/datastorage/
+ubuntu:~/IRLLibs/datastorage$ cd pics/
+ubuntu:~/IRLLibs/datastorage/pics$ cd ../..
+```
+Once you have verified you have the data that you need, run the cleanup script.
+```
+ubuntu:~/IRLLibs$ ./cleanup
+```
+You will run through a series of prompts which will ask you to give the folder where the data is stored from this run a name and give some notes about your test.  The notes will prompt with nano.  To exit the notes once you are done, hit ctrl-c, followed by "y", and then hit enter.
