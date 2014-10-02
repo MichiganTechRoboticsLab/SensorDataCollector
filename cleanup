@@ -1,29 +1,6 @@
 #!/bin/bash
 
-NOW=$(date +"%s")
-echo -e "Welcome to the clean up script."
-echo -e "If SD is mounted the data will be"
-echo -e "moved to the SD card, else data will"
-echo -e "be deleted."
-echo -e "Are you sure you want to continue [y/N]?"
-read confirm
-if !([ "$confirm" = "y" ] || [ "$confirm" = "Y"]); then
-    exit 0
-fi
 
-mount -l | grep Kingston &> /dev/null
-if [ $? = 0 ]; then
-   echo -e "Please input a small note to represent this dataset" > ~/IRLLibs/data_storage/datanotes
-   echo -e "DO NOT RENAME THIS FILE!" > ~/IRLLibs/data_storage/datanotes
-   nano ~/IRLLibs/data_storage/datanotes
+rm -rf data_storage
 
-   echo -e "please input the name of the folder for your data"
-   echo -e "--NO SPACES, PLEASE MAKE IT A VALID FOLDER NAME"
-
-   read datafname
-
-   gcp -r ~/IRLLibs/data_storage /media/ubuntu/Kingston/$datafname
-fi
-rm -rf ~/IRLLibs/data_storage
-
-mkdir -p ~/IRLLibs/data_storage/pics
+mkdir -p data_storage/pics

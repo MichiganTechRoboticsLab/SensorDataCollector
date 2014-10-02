@@ -44,6 +44,7 @@ static const char RECEIVE_ERROR_MESSAGE[] = "receive error.";
 
 
 //! チェックサムの計算
+//! Calculate Checksum
 static char scip_checksum(const char buffer[], int size)
 {
     unsigned char sum = 0x00;
@@ -54,6 +55,7 @@ static char scip_checksum(const char buffer[], int size)
     }
 
     // 計算の意味は SCIP 仕様書を参照のこと
+    // SCIP specification formula
     return (sum & 0x3f) + 0x30;
 }
 
@@ -564,6 +566,7 @@ static int receive_length_data(urg_t *urg, long length[],
 
 
 //! 距離データの取得
+//! Retreive range data
 static int receive_data(urg_t *urg, long data[], unsigned short intensity[],
                         long *time_stamp)
 {
@@ -639,6 +642,7 @@ static int receive_data(urg_t *urg, long data[], unsigned short intensity[],
     }
 
     // タイムスタンプの取得
+    // Retrieve the Timestamp
     n = connection_readline(&urg->connection,
                             buffer, BUFFER_SIZE, urg->timeout);
     if (n > 0) {

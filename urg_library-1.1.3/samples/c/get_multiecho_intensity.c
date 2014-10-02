@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/time.h>
+#include <sys/types.h>
 
 static void print_echo_data(long data[], unsigned short intensity[],
                             int index)
@@ -29,7 +31,7 @@ static void print_echo_data(long data[], unsigned short intensity[],
 static void print_data(urg_t *urg, long data[],
                        unsigned short intensity[], int data_n, long time_stamp)
 {
-#if 1
+#if 0
     int front_index;
 
     (void)data_n;
@@ -42,13 +44,22 @@ static void print_data(urg_t *urg, long data[],
 #else
     (void)urg;
     int i;
-
+    
+    // System Timestamp
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+	  printf("%ld.%06ld, ", (long) tv.tv_sec, (long) tv.tv_usec);
+        
+    // Sensor Timestamp
+    printf("%ld, ", time_stamp);
+    
     // \~japanese 全てのデータを表示
-    printf("# n = %d, time_stamp = %ld\n", data_n, time_stamp);
+    // \~English Display all of the data
     for (i = 0; i < data_n; ++i) {
         print_echo_data(data, intensity, i);
-        printf("\n");
     }
+    
+    printf("%ld\n", time_stamp);
 #endif
 }
 
@@ -56,7 +67,7 @@ static void print_data(urg_t *urg, long data[],
 int main(int argc, char *argv[])
 {
     enum {
-        CAPTURE_TIMES = 10,
+        CAPTURE_TIMES = 1000000,
     };
     urg_t urg;
     int max_data_size;
@@ -66,9 +77,7 @@ int main(int argc, char *argv[])
     int n;
     int i;
 
-    if (open_urg_sensor(&urg, argc, argv) < 0) {
-        return 1;
-    }
+    while (open_urg_sensor(&urg, argc, argv) < 0);
 
     max_data_size = urg_max_data_size(&urg);
     data = (long *)malloc(max_data_size * 3 * sizeof(data[0]));
@@ -84,14 +93,16 @@ int main(int argc, char *argv[])
     urg_start_measurement(&urg, URG_MULTIECHO_INTENSITY, CAPTURE_TIMES, 0);
     for (i = 0; i < CAPTURE_TIMES; ++i) {
         n = urg_get_multiecho_intensity(&urg, data, intensity, &time_stamp);
-        if (n <= 0) {
+        if ((n <= 0) & 0) {
             printf("urg_get_multiecho_intensity: %s\n", urg_error(&urg));
             free(data);
             free(intensity);
             urg_close(&urg);
             return 1;
         }
-        print_data(&urg, data, intensity, n, time_stamp);
+        
+        if (n > 0)
+          print_data(&urg, data, intensity, n, time_stamp);
     }
 
     // \~japanese 切断

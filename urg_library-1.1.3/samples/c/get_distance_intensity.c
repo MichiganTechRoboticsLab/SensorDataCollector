@@ -16,6 +16,7 @@ static void print_data(urg_t *urg, long data[], unsigned short intensity[],
     (void)data_n;
 
     // \~japanese 前方のデータのみを表示
+    // English Show only the first point
     front_index = urg_step2index(urg, 0);
     printf("%ld [mm], %d [1], (%ld [msec])\n",
            data[front_index], intensity[front_index], time_stamp);
@@ -26,6 +27,7 @@ static void print_data(urg_t *urg, long data[], unsigned short intensity[],
     int i;
 
     // \~japanese 全てのデータを表示
+    // English Show all of the data
     printf("# n = %d, time_stamp = %ld\n", data_n, time_stamp);
     for (i = 0; i < data_n; ++i) {
         printf("%d, %ld, %d\n", i, data[i], intensity[i]);
@@ -64,6 +66,7 @@ int main(int argc, char *argv[])
     }
 
     // \~japanese データ取得
+    // Acquire data from sensor
     urg_start_measurement(&urg, URG_DISTANCE_INTENSITY, CAPTURE_TIMES, 0);
     for (i = 0; i < CAPTURE_TIMES; ++i) {
         n = urg_get_distance_intensity(&urg, data, intensity, &time_stamp);
@@ -77,6 +80,7 @@ int main(int argc, char *argv[])
     }
 
     // \~japanese 切断
+    // English Cleanup
     free(intensity);
     free(data);
     urg_close(&urg);

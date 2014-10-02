@@ -88,13 +88,14 @@ void PrintError( Error error )
 
 int main(int argc, char** argv)
 {
-    struct timeval result, origin;
+    struct timeval result;
 
     PrintBuildInfo();
 
     //fastest BW is MODE_4 w/ PIXEL_FORMAT_MONO8 @ 32.00 fps, calculated to 30.30 fps
     //fastest C  is MODE_1 w/ PIXEL_FORMAT_RGB8  @ 22.00 fps, calculated to 21.74 fps
-    const Mode k_fmt7Mode = MODE_1;
+    //Full-Rez Color is MODE_0 w/ PIXEL_FORMAT_RGB8  @ 8.00 fps
+    const Mode k_fmt7Mode = MODE_0;
     const PixelFormat k_fmt7PixFmt = PIXEL_FORMAT_RAW8;
     const int k_numImages = 1000000;
 
