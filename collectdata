@@ -24,6 +24,18 @@ HELP="Cmd ... Explanation\n0 ..... kill all processes, exit script\n1 ..... kill
 
 echo -e "Welcome to the Intelligent Robotics Laboratory Datalogger!\n"
 
+if [ ! -d data_storage ]; then
+    echo -e "Data Directory not found ... creating"
+    mkdir data_storage
+    mkdir data_storage/pics
+fi
+
+if [ ! -d data_storage/pics ]; then
+    echo -e "Pics Directory not found ... creating"
+    mkdir data_storage/pics
+fi
+
+
 
 # I got tired of typing yes and no.
 cmdLDR="yes";
