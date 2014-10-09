@@ -71,3 +71,12 @@ data_storage
 
 !flycapture.2.6.3.4_armhf/lib/*.so*
 !flycapture.2.6.3.4_armhf/lib/C/*.so*
+
+urg_library-1.1.3/samples/c/get_distance
+urg_library-1.1.3/samples/c/get_distance_intensity
+urg_library-1.1.3/samples/c/get_multiecho
+urg_library-1.1.3/samples/c/get_multiecho_intensity
+urg_library-1.1.3/samples/c/sensor_parameter
+urg_library-1.1.3/samples/c/sync_time_stamp
+urg_library-1.1.3/samples/cpp/get_distance_josh
+vnccpplib-0.3.2/examples/vn200_linux_binary_async/vn200_linux_binary_async

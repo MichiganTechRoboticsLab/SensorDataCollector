@@ -1,123 +1,206 @@
 #!/bin/bash
 
+clear
 #This script will allow you to collect Lidar, image, and vector-nav data.
 
 #This defines the folder and name of the csv file for the LIDAR
 #it must take the following format "/another/random/dir/somename.csv" <- WITH QUOTATIONS
-LIDARLOC="data_storage/"
+LIDARLOC="data_storage"
+LIDARPROG="get_multiecho_intensity"
+LIDARPS=$(expr substr $LIDARPROG 1 15)
+LIDARINFO="sensor_parameter"
+LIDARPROGDIR="urg_library-1.1.3/samples/c"
 
 #this defines the folder where the pictures are located,
 #it must take the following format "/some/random/dir/"
-PICLOC="data_storage/pics/"
+PICLOC="data_storage/pics"
+PICPROG="CustomImageEx"
+PICPS=$(expr substr $PICPROG 1 15)
+echo $PICPS
+PICPROGDIR="flycapture.2.6.3.4_armhf/bin"
 
 #this defines the folder where the vector-nav data is being held
 #it must take the following
 VNLOC="data_storage/vn.csv"
+VNPROG="vn200_linux_binary_async"
+VNPS=$(expr substr $VNPROG 1 15)
+VNPROGDIR="vnccpplib-0.3.2/examples/vn200_linux_binary_async"
 
 #DO NOT EDIT ANYTHING BELOW THE BIG DOUBLE LINES UNLESS YOU KNOW WHAT YOU ARE DOING
+
+# trap ctrl-c so processes are killed with the menu task
+trap ctrlc SIGINT SIGQUIT SIGTSTP
+function ctrlc() {
+    clear
+    echo -e "Killing Background Tasks...\n"
+    
+    killProg $LIDARPROG
+    killProg $PICPROG
+    killProg $VNPROG
+    
+    exit 1
+}
+
+function running()
+{
+    echo "$(pidof $1)"
+}
+
+HELP="Cmd ... Explanation\n \
+ 0 ..... kill all processes, exit script\n \
+ 1 ..... kill LIDAR\n \
+ 2 ..... kill camera\n \
+ 3 ..... kill VectorNav\n \
+ 4 ..... view LIDAR\n \
+ 5 ..... view VectorNav\n \
+ 6 ..... view running\n \
+ 7 ..... print help"
+
+function printHelp()
+{
+    echo -e "Cmd ... Explanation\n0 ..... kill all processes, exit script"
+    if [[ $(running $LIDARPROG ) ]]; then
+        echo -e "1 ..... kill LIDAR\n2 ..... view LIDAR Data"
+    fi
+
+    if [[ $(running $PICPROG ) ]]; then
+        echo -e "3 ..... kill Camera\n4 ..... view Camera Data - Not Done"
+    fi
+
+    if [[ $(running $VNPROG ) ]]; then
+        echo -e "5 ..... kill VectorNav\n6 ..... view VectorNav Data"
+    fi
+    
+    echo "7 ..... view Running"
+}
+
+# translate function
+function translateProg()
+{
+    
+    local string=$( echo $1 | sed -e "s:$VNPROG:VectorNav:" -e "s:$LIDARPROG:LIDAR:" -e "s:$PICPROG:Camera:" )
+    echo $string
+}
+
+# define kill functions
+function killProg()
+{
+    local prog=$( translateProg $1 )
+    echo -e "Killing $prog"
+    local pid=$(pidof $1)
+    if [[ $pid ]]; then
+        kill $pid 
+        wait $pid >/dev/null 2>&1
+    else
+        echo -e "$prog not running\n"
+    fi
+}
+
+# define display functions
+
+function displayLidar()
+{
+    clear
+    trap ":" SIGINT SIGQUIT SIGTSTP
+    tail -f "${LIDARLOC}/lidar_data.csv"
+    trap ctrlc SIGINT SIGQUIT SIGTSTP
+}
+
+function displayImages()
+{
+    trap ":" SIGINT SIGQUIT SIGTSTP
+    echo "Not Competed"
+    sleep 2
+    trap ctrlc SIGINT SIGQUIT SIGTSTP
+}
+
+function displayVectorNav()
+{   
+    clear
+    trap ":" SIGINT SIGQUIT SIGTSTP
+    tail -f "${VNLOC}"
+    trap ctrlc SIGINT SIGQUIT SIGTSTP
+}
+
+function displayRunning()
+{
+    #echo "($VNPS|$LIDARPS|$PICPS)"
+    if [[ $( ps -o comm | egrep "($VNPS|$LIDARPS|$PICPS)" ) ]]; then
+        ps -o comm | egrep "($VNPS|$LIDARPS|$PICPS)" | sed -e "s:$VNPS:VectorNav:" -e "s:$LIDARPS:LIDAR:" -e "s:$PICPS:Camera:" 
+    else
+        echo -e "Programs not running"
+    fi
+}
 
 #That being said, if you know what you're doing then you should probably
 #...make it nicer.  This was my first ever large bash script. :-)
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
-HELP="Cmd ... Explanation\n0 ..... kill all processes, exit script\n1 ..... kill LIDAR\n2 ..... kill camera\n3 ..... kill VectorNav\n4 ..... print help"
+
 
 echo -e "Welcome to the Intelligent Robotics Laboratory Datalogger!\n"
 
-if [ ! -d data_storage ]; then
+if [[ ! -d $LIDARLOC ]]; then
     echo -e "Data Directory not found ... creating"
-    mkdir data_storage
-    mkdir data_storage/pics
+    mkdir $LIDARLOC
 fi
 
-if [ ! -d data_storage/pics ]; then
+if [[ ! -d $PICLOC ]]; then
     echo -e "Pics Directory not found ... creating"
-    mkdir data_storage/pics
+    mkdir $PICLOC
 fi
 
 
 
 # I got tired of typing yes and no.
 cmdLDR="yes";
+#cmdLDR="";
 dispLDR="";
 
 cmdIMG="yes";
+#cmdIMG="";
 dispIMG="";
 
 cmdVN="yes";
+#cmdVN="";
 dispVN="";
 
 
-#echo -e "Would you like to collect LIDAR data? ( type 'yes' if so, otherwise type anything else )"
-#read cmdLDR
-
-#if [ "$cmdLDR" = "yes" ]; then
-#    echo -e "Would you like to display the LIDAR?\n*This may slow data collection"
-#    read dispLDR
-#fi
-#
-#if [ "$dispLDR" = "yes" ]; then
-#    dispLDR="-d"; 
-#else
-#    dispLDR="";
-#fi
-#
-#echo "$dispLDR"
-#
-#echo -e "\nWould you like to collect image data? ( type 'yes' if so, otherwise type anything else )"
-#read cmdIMG
-#
-#if [ "$cmdIMG" = "yes" ]; then
-#    echo -e "Would you like to display the image data?\n*This may slow data collection"
-#    read dispIMG
-#fi
-#
-#echo -e "\nWould you like to collect VectorNav data? ( type 'yes' if so, otherwise type anything else )"
-#read cmdVN
-
-
-
-# trap ctrl-c so processes are killed with the menu task
-trap ctrlc INT
-function ctrlc() {
-	echo -e "Killing Background Tasks...\n"
-	kill $(pidof LIDAR_OMG)
-	kill $(pidof CustomImageEx)
-	kill $(pidof main)
-	exit 1
-}
-
-
-
-# Start Background Processes
-#TIME=5
-#echo -e "Data collection commencing\n"
-#for i in {5..1}
-#do
-#	echo -e "$i"
-#	sleep 1
-#done
 echo -e "Data collection has begun\n"
 
-if [ "$cmdLDR" = "yes" ]; then
-    echo -e "collecting LIDAR Data\n"
-    echo "Display tag: $dispLDR"
-    urg_library-1.1.3/samples/c/sensor_parameter -e 192.168.0.10 > "${LIDARLOC}lidar_info.txt" 
-    sleep 1
-    urg_library-1.1.3/samples/c/get_multiecho_intensity -e 192.168.0.10 > "${LIDARLOC}lidar_data.csv" &
+if [[ "$cmdLDR" = "yes" ]]; then
+    if [[ -x $LIDARPROGDIR/$LIDARINFO && -x $LIDARPROGDIR/$LIDARPROG ]]; then
+        echo -e "collecting LIDAR Data\n"
+        #echo "Display tag: $dispLDR"
+        $LIDARPROGDIR/$LIDARINFO -e 192.168.0.10 >| "${LIDARLOC}/lidar_info.txt" 
+        sleep 1
+        $LIDARPROGDIR/$LIDARPROG -e 192.168.0.10 >| "${LIDARLOC}/lidar_data.csv" &
+    else
+        echo -e "LIDAR Programs not found or they can not be run"
+    fi
 fi
 
-if [ "$cmdIMG" = "yes" ]; then
-    echo -e "collecting image data\n"
-    flycapture.2.6.3.4_armhf/bin/CustomImageEx ${PICLOC} > ${PICLOC}caminfo &
+if [[ "$cmdIMG" = "yes" ]]; then
+    if [[ $(uname -m) == "arm*" && -x $PICPROGDIR/$PICPROG ]]; then
+        echo -e "collecting image data\n"
+        $PICPROGDIR/$PICPROG ${PICLOC} > ${PICLOC}caminfo &
+    else
+        echo -e "Camera Program not found or it can not be run\n"
+    fi
+    
 fi
 
-if [ "$cmdVN" = "yes" ]; then
-    echo -e "collecting vector-nav data\n"
-    vnccpplib-0.3.2/examples/vn200_linux_binary_async/vn200_linux_binary_async > ${VNLOC} &
+if [[ "$cmdVN" = "yes" ]]; then
+    if [[ -x $VNPROGDIR/$VNPROG ]]; then
+        echo -e "collecting vector-nav data\n"
+        $VNPROGDIR/$VNPROG > ${VNLOC} &
+    else
+        echo -e "VectorNav Program not found or it can not be run\n"
+    fi
+    
 fi
 
-if [ "$dispIMG" = "yes" ]; then
+if [[ "$dispIMG" = "yes" ]]; then
     sleep 2
     display_scripts/ImageViewer.py &
 fi
@@ -125,46 +208,63 @@ fi
 
 
 # Display Background Processes
-ps
-
+echo -e "\nRunning\n---------------"
+displayRunning
+echo -e "---------------\n"
 
 
 # Command Menu 
-echo -e "$HELP"
-while [ 1 ]; do
+printHelp
+
+while [[ 1 ]]; do
+    
     read cmd
 
-    if [ \( "$cmd" -eq 1 \) -o \( "$cmd" -eq 0 \) ]; then
-        echo "killing lidar"
-        kill $(pidof sensor_parameter)
-        echo -e "lidar killed\n"
+    if [[ $(running $LIDARPROG) ]]; then
+        if [[ "$cmd" == 1 ]]; then
+            killProg $LIDARPROG
+        fi
+
+        if [[ "$cmd" == 2 ]]; then
+            displayLidar
+        fi
+    fi
+
+    if [[ $(running $PICPROG) ]]; then
+        if [[ "$cmd" == 3 ]]; then
+            killProg $PICPROG
+        fi
+
+       if [[ "$cmd" == 4 ]]; then
+            displayImages
+        fi
+    fi
+
+    if [[ $(running $VNPROG) ]]; then
+        if [[ "$cmd" == 5 ]]; then
+            killProg $VNPROG
+        fi
+
+        if [[ "$cmd" == 6 ]]; then
+            displayVectorNav
+        fi
     fi
     
-    if [ \( "$cmd" -eq 1 \) -o \( "$cmd" -eq 0 \) ]; then
-        echo "killing lidar"
-        kill $(pidof get_multiecho_intensity)
-        echo -e "lidar killed\n"
+
+    if [[ "$cmd" == 7 ]]; then
+        clear
+        displayRunning
+        sleep 2
     fi
 
-    if [ \( "$cmd" -eq 2 \) -o \( "$cmd" -eq 0 \) ]; then
-        echo "killing camera"
-        kill $(pidof CustomImageEx)
-        kill `pidof python`
-        echo -e "camera killed\n"
-    fi
-
-    if [ \( "$cmd" -eq 3 \) -o \( "$cmd" -eq 0 \) ]; then
-        echo "killing vector nav"
-        kill $(pidof vn200_linux_binary_async)
-        echo -e "vector nav killed\n"
-    fi
-
-    if [ "$cmd" -eq 0 ]; then
+    if [[ "$cmd" == 0 ]]; then
         echo "Thank you for using the IRL Data-logger!"
+        sleep 1
         break
     fi
 
-    if [ "$cmd" -eq 4 ]; then
-        echo -e $HELP
-    fi
+    clear
+    printHelp
 done
+
+ctrlc
