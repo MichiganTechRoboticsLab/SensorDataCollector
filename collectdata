@@ -21,12 +21,10 @@ PICPROGDIR="flycapture.2.6.3.4_armhf/bin"
 
 #this defines the folder where the vector-nav data is being held
 #it must take the following
-VNLOC="data_storage/vn.csv"
+VNLOC="data_storage"
 VNPROG="vn200_linux_binary_async"
 VNPS=$(expr substr $VNPROG 1 15)
 VNPROGDIR="vnccpplib-0.3.2/examples/vn200_linux_binary_async"
-
-#DO NOT EDIT ANYTHING BELOW THE BIG DOUBLE LINES UNLESS YOU KNOW WHAT YOU ARE DOING
 
 # trap ctrl-c so processes are killed with the menu task
 trap ctrlc SIGINT SIGQUIT SIGTSTP
@@ -38,7 +36,7 @@ function ctrlc() {
     killProg $PICPROG
     killProg $VNPROG
     
-    exit 1
+    exit 0
 }
 
 function running()
@@ -46,33 +44,7 @@ function running()
     echo "$(pidof $1)"
 }
 
-HELP="Cmd ... Explanation\n \
- 0 ..... kill all processes, exit script\n \
- 1 ..... kill LIDAR\n \
- 2 ..... kill camera\n \
- 3 ..... kill VectorNav\n \
- 4 ..... view LIDAR\n \
- 5 ..... view VectorNav\n \
- 6 ..... view running\n \
- 7 ..... print help"
 
-function printHelp()
-{
-    echo -e "Cmd ... Explanation\n0 ..... kill all processes, exit script"
-    if [[ $(running $LIDARPROG ) ]]; then
-        echo -e "1 ..... kill LIDAR\n2 ..... view LIDAR Data"
-    fi
-
-    if [[ $(running $PICPROG ) ]]; then
-        echo -e "3 ..... kill Camera\n4 ..... view Camera Data - Not Done"
-    fi
-
-    if [[ $(running $VNPROG ) ]]; then
-        echo -e "5 ..... kill VectorNav\n6 ..... view VectorNav Data"
-    fi
-    
-    echo "7 ..... view Running"
-}
 
 # translate function
 function translateProg()
@@ -101,14 +73,14 @@ function killProg()
 function displayLidar()
 {
     clear
-    trap ":" SIGINT SIGQUIT SIGTSTP
-    tail -f "${LIDARLOC}/lidar_data.csv"
+    trap ctrlc2 INT
+    tail -n 1 -f "${LIDARLOC}/lidar_data.csv"
     trap ctrlc SIGINT SIGQUIT SIGTSTP
 }
 
 function displayImages()
 {
-    trap ":" SIGINT SIGQUIT SIGTSTP
+    trap ctrlc2 INT
     echo "Not Competed"
     sleep 2
     trap ctrlc SIGINT SIGQUIT SIGTSTP
@@ -117,8 +89,8 @@ function displayImages()
 function displayVectorNav()
 {   
     clear
-    trap ":" SIGINT SIGQUIT SIGTSTP
-    tail -f "${VNLOC}"
+    trap ctrlc2 INT
+    tail -n 1 -f "${VNLOC}/vn.csv"
     trap ctrlc SIGINT SIGQUIT SIGTSTP
 }
 
@@ -132,139 +104,134 @@ function displayRunning()
     fi
 }
 
-#That being said, if you know what you're doing then you should probably
-#...make it nicer.  This was my first ever large bash script. :-)
-#-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
 
 
-echo -e "Welcome to the Intelligent Robotics Laboratory Datalogger!\n"
 
+# Create directories if needed
 if [[ ! -d $LIDARLOC ]]; then
-    echo -e "Data Directory not found ... creating"
-    mkdir $LIDARLOC
+    mkdir -p $LIDARLOC
 fi
-
 if [[ ! -d $PICLOC ]]; then
-    echo -e "Pics Directory not found ... creating"
-    mkdir $PICLOC
+    mkdir -p $PICLOC
+fi
+if [[ ! -d $VNLOC ]]; then
+    mkdir -p $VNLOC
 fi
 
+function ctrlc2 { 
+    echo -e "\nBack to main menu...\n"
+    trap ctrlc INT
+}
 
 
-# I got tired of typing yes and no.
-cmdLDR="yes";
-#cmdLDR="";
-dispLDR="";
-
-cmdIMG="yes";
-#cmdIMG="";
-dispIMG="";
-
-cmdVN="yes";
-#cmdVN="";
-dispVN="";
-
-
-echo -e "Data collection has begun\n"
-
-if [[ "$cmdLDR" = "yes" ]]; then
-    if [[ -x $LIDARPROGDIR/$LIDARINFO && -x $LIDARPROGDIR/$LIDARPROG ]]; then
-        echo -e "collecting LIDAR Data\n"
-        #echo "Display tag: $dispLDR"
-        $LIDARPROGDIR/$LIDARINFO -e 192.168.0.10 >| "${LIDARLOC}/lidar_info.txt" 
-        sleep 1
-        $LIDARPROGDIR/$LIDARPROG -e 192.168.0.10 >| "${LIDARLOC}/lidar_data.csv" &
-    else
-        echo -e "LIDAR Programs not found or they can not be run"
-    fi
-fi
-
-if [[ "$cmdIMG" = "yes" ]]; then
-    if [[ $(uname -m) == "arm*" && -x $PICPROGDIR/$PICPROG ]]; then
-        echo -e "collecting image data\n"
-        $PICPROGDIR/$PICPROG ${PICLOC} > ${PICLOC}caminfo &
-    else
-        echo -e "Camera Program not found or it can not be run\n"
-    fi
-    
-fi
-
-if [[ "$cmdVN" = "yes" ]]; then
-    if [[ -x $VNPROGDIR/$VNPROG ]]; then
-        echo -e "collecting vector-nav data\n"
-        $VNPROGDIR/$VNPROG > ${VNLOC} &
-    else
-        echo -e "VectorNav Program not found or it can not be run\n"
-    fi
-    
-fi
-
-if [[ "$dispIMG" = "yes" ]]; then
-    sleep 2
-    display_scripts/ImageViewer.py &
-fi
+# Main Menu
+HELP="\nMichiganTech Intelligent Robotics Laboratory Data Logger Menu:\n
+	0 - Exit Data Logger
+	
+	1 - Start Lidar Logger
+	2 - Start Camera Logger
+	3 - Start VectorNav Logger
+	
+	4 - Stop Lidar Logger
+	5 - Stop Camera Logger
+	6 - Stop VectorNav Logger
+	
+	7 - Display lidar data stream (Ctrl-C to exit)
+	8 - Display Camera Images (Requires SSH X-Forwarding)
+	9 - Display VectorNav data stream (Ctrl-C to exit)"
 
 
-
-# Display Background Processes
-echo -e "\nRunning\n---------------"
-displayRunning
-echo -e "---------------\n"
 
 
 # Command Menu 
-printHelp
-
-while [[ 1 ]]; do
-    
-    read cmd
-
-    if [[ $(running $LIDARPROG) ]]; then
-        if [[ "$cmd" == 1 ]]; then
-            killProg $LIDARPROG
-        fi
-
-        if [[ "$cmd" == 2 ]]; then
-            displayLidar
-        fi
-    fi
-
-    if [[ $(running $PICPROG) ]]; then
-        if [[ "$cmd" == 3 ]]; then
-            killProg $PICPROG
-        fi
-
-       if [[ "$cmd" == 4 ]]; then
-            displayImages
-        fi
-    fi
-
-    if [[ $(running $VNPROG) ]]; then
-        if [[ "$cmd" == 5 ]]; then
-            killProg $VNPROG
-        fi
-
-        if [[ "$cmd" == 6 ]]; then
-            displayVectorNav
-        fi
-    fi
-    
-
-    if [[ "$cmd" == 7 ]]; then
-        clear
-        displayRunning
-        sleep 2
-    fi
-
-    if [[ "$cmd" == 0 ]]; then
-        echo "Thank you for using the IRL Data-logger!"
-        sleep 1
-        break
-    fi
-
+while [ 1 ]; do
     clear
-    printHelp
+
+    # Display Background Processes
+    echo -e "Running Programs"
+    echo "==============="
+    displayRunning
+    echo -e "===============\n"
+
+    # Show Menu
+    echo -e "$HELP"
+    read cmd
+    
+
+    case "$cmd" in
+        # Exit Datalogger
+        0)
+            echo "Thank you for using the MichiganTech IRL data logger!"
+            ctrlc
+        ;;
+        
+        # Start logging
+        1)
+            if [[ -x $LIDARPROGDIR/$LIDARINFO && -x $LIDARPROGDIR/$LIDARPROG ]]; then
+                echo "Starting Lidar Logger"
+                $LIDARPROGDIR/$LIDARINFO -e 192.168.0.10 >| "${LIDARLOC}/lidar_info.txt" 
+                sleep 1
+                $LIDARPROGDIR/$LIDARPROG -e 192.168.0.10 >| "${LIDARLOC}/lidar_data.csv" &
+            else
+                echo -e "LIDAR Programs not found or they can not be run"
+            fi
+            sleep 2
+        ;;
+        2)
+
+            if [[ $(uname -m) == "arm*" && -x $PICPROGDIR/$PICPROG ]]; then
+                echo "Starting Camera Logger"
+                $PICPROGDIR/$PICPROG ${PICLOC} > ${PICLOC}/caminfo &
+            else
+                echo -e "Camera Program not found or it can not be run\n"
+            fi
+            sleep 2
+        ;;
+        3)
+            if [[ -x $VNPROGDIR/$VNPROG ]]; then
+                echo "Starting VectorNav Logger"
+                $VNPROGDIR/$VNPROG > ${VNLOC}/vn.csv &
+            else
+                echo -e "VectorNav Program not found or it can not be run\n"
+            fi
+            sleep 2
+        ;;
+        
+        # Stop Logging
+        4)
+            echo "Stopping Lidar Logger"
+            killProg $LIDARINFO
+            killProg $LIDARPROG
+            sleep 2
+        ;;
+        5)
+            echo "Stopping Camera Logger"
+            killProg $PICPROG
+            killProg "python"
+            sleep 2
+        ;;
+        6)
+            echo "Stopping VectorNav Logger"
+            killProg $VNPROG
+            sleep 2
+        ;;
+        
+        # Displays
+        7)
+            echo "Displaying Lidar data"
+            displayLidar
+        ;;
+        8)
+            echo "Displaying Camera data"
+            displayImages
+        ;;
+        9)
+            echo "Displaying Lidar data"
+            displayVectorNav
+        ;;
+        
+    esac
+    
 done
 
 ctrlc
