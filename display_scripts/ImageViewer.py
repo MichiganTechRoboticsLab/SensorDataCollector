@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python 
 
 import glob
 import cv2
@@ -18,7 +18,7 @@ while True:
     img_sm  = cv2.resize(img, (0,0), fx=0.3, fy=0.3) 
 	
 	# Show it
-    cv2.imshow('RGB',img_sm)
+    cv2.imshow('Press q to exit',img_sm)
 	
 	# If 'q' key is pressed, exit
     if cv2.waitKey(1) & 0xFF == ord('q'): break

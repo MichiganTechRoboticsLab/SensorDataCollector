@@ -80,10 +80,7 @@ function displayLidar()
 
 function displayImages()
 {
-    trap ctrlc2 INT
-    echo "Not Competed"
-    sleep 2
-    trap ctrlc SIGINT SIGQUIT SIGTSTP
+    display_scripts/ImageViewer.py &
 }
 
 function displayVectorNav()
@@ -175,17 +172,15 @@ while [ 1 ]; do
             else
                 echo -e "LIDAR Programs not found or they can not be run"
             fi
-            sleep 2
         ;;
         2)
 
-            if [[ $(uname -m) == "arm*" && -x $PICPROGDIR/$PICPROG ]]; then
+            if [[ -x $PICPROGDIR/$PICPROG ]]; then
                 echo "Starting Camera Logger"
-                $PICPROGDIR/$PICPROG ${PICLOC} > ${PICLOC}/caminfo &
+                $PICPROGDIR/$PICPROG ${PICLOC}/ > ${PICLOC}/caminfo &
             else
                 echo -e "Camera Program not found or it can not be run\n"
             fi
-            sleep 2
         ;;
         3)
             if [[ -x $VNPROGDIR/$VNPROG ]]; then
@@ -194,7 +189,6 @@ while [ 1 ]; do
             else
                 echo -e "VectorNav Program not found or it can not be run\n"
             fi
-            sleep 2
         ;;
         
         # Stop Logging
