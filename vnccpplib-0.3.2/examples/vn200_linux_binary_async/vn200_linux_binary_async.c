@@ -5,9 +5,41 @@
 #include <inttypes.h>
 #include <sys/time.h>
 
+#include <sys/signalfd.h>
+#include <signal.h>
+#include <unistd.h>
+#include <poll.h>
+#include <stdlib.h>
+
+#define handle_error(msg)                               \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
 /* Change the connection settings to your configuration. */
 const char* const COM_PORT = "//dev//ttyS0";
 const int BAUD_RATE = 115200;
+
+static int setupSig(void)
+{
+    sigset_t mask;
+    int sfd;
+    
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGQUIT);
+    sigaddset(&mask, SIGTERM);
+
+    /* Block signals so that they aren't handled
+       according to their default dispositions */
+
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+        handle_error("sigprocmask");
+
+    sfd = signalfd(-1, &mask, 0);
+    if (sfd == -1)
+        handle_error("signalfd");
+    return sfd;
+}
 
 void asyncDataListener(
 	void* sender,
@@ -68,7 +100,40 @@ int main()
 	errorCode = vn200_registerAsyncDataReceivedListener(&vn200, &asyncDataListener);
 
 	/* Sleep for 24 hours. Data will be received by the asycDataListener during this time. */
-	sleep(60*60*24);
+	// sleep(60*60*24);
+	
+	// Signals for a soft shutdown
+        int sfd = setupSig();
+        struct signalfd_siginfo fdsi;
+        struct pollfd pfd[1];
+        int ret;
+
+        pfd[0].fd = sfd;
+        pfd[0].events = POLLIN | POLLERR | POLLHUP;
+	
+	
+	int run = 1;
+	while(run)
+        {
+            ret = poll(pfd, 1, 0);
+            if(ret > 0)
+            {
+                ssize_t s = read(sfd, &fdsi, sizeof(struct signalfd_siginfo));
+                if (s != sizeof(struct signalfd_siginfo))
+                    handle_error("read");
+                
+                switch(fdsi.ssi_signo)
+                {
+                    case SIGINT:
+                    case SIGQUIT:
+                    case SIGTERM:
+                        run = 0;
+                        break;
+                    default: break;
+                }
+            }
+            sleep(10);
+        }
 
 	errorCode = vn200_unregisterAsyncDataReceivedListener(&vn200, &asyncDataListener);
 	
