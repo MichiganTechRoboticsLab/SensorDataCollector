@@ -6,9 +6,42 @@
 #include "open_urg_sensor.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <sys/time.h>
 #include <sys/types.h>
+
+#include <sys/signalfd.h>
+#include <signal.h>
+#include <unistd.h>
+#include <poll.h>
+
+#define handle_error(msg)                               \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+static int setupSig(void)
+{
+    sigset_t mask;
+    int sfd;
+    
+
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGQUIT);
+    sigaddset(&mask, SIGTERM);
+
+    /* Block signals so that they aren't handled
+       according to their default dispositions */
+
+    if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+        handle_error("sigprocmask");
+
+    sfd = signalfd(-1, &mask, 0);
+    if (sfd == -1)
+        handle_error("signalfd");
+    return sfd;
+}
+
 
 static void print_echo_data(long data[], unsigned short intensity[],
                             int index)
@@ -88,10 +121,41 @@ int main(int argc, char *argv[])
         perror("urg_max_index()");
         return 1;
     }
+    
+    // Signals for a soft shutdown
+    int sfd = setupSig();
+    struct signalfd_siginfo fdsi;
+    struct pollfd pfd[1];
+    int ret;
 
+    pfd[0].fd = sfd;
+    pfd[0].events = POLLIN | POLLERR | POLLHUP;
+    
+    
+    // Loop Control
+    bool run = true;
+    
     // \~japanese ÉfÅ[É^éÊìæ
     urg_start_measurement(&urg, URG_MULTIECHO_INTENSITY, CAPTURE_TIMES, 0);
-    for (i = 0; i < CAPTURE_TIMES; ++i) {
+    for (i = 0; i < CAPTURE_TIMES && run; ++i) {
+        ret = poll(pfd, 1, 0);
+        
+        if(ret > 0)
+        {
+            ssize_t s = read(sfd, &fdsi, sizeof(struct signalfd_siginfo));
+            if (s != sizeof(struct signalfd_siginfo))
+                handle_error("read");
+            
+            switch(fdsi.ssi_signo)
+            {
+                case SIGINT:
+                case SIGQUIT:
+                case SIGTERM:
+                    run = false;
+                    break;
+                default: break;
+            }
+        }
         n = urg_get_multiecho_intensity(&urg, data, intensity, &time_stamp);
         if ((n <= 0) & 0) {
             printf("urg_get_multiecho_intensity: %s\n", urg_error(&urg));
