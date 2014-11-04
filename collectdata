@@ -91,7 +91,7 @@ function displayLidar()
 
 function displayImages()
 {
-    display_scripts/ImageViewer.py &
+    display_scripts/ImageViewer.py $PICLOC &
 }
 
 function displayVectorNav()
@@ -137,6 +137,7 @@ function mkdirs()
     # Create directories if needed
     if [[ ! -d $LIDARLOC ]]; then
         mkdir -p $LIDARLOC
+        echo "2" > $LIDARLOC/version
     fi
     if [[ ! -d $PICLOC ]]; then
         mkdir -p $PICLOC

@@ -17,6 +17,8 @@
 /* Change the connection settings to your configuration. */
 const char* const COM_PORT = "//dev//ttyS0";
 const int BAUD_RATE = 115200;
+volatile int writing = 0;
+
 
 static int setupSig(void)
 {
@@ -93,7 +95,7 @@ int main()
 		BG6_NONE,
 		true);
 
-	printf("Latitude, Longitude, Altitude, Yaw, Pitch, Roll\n");
+	//printf("Latitude, Longitude, Altitude, Yaw, Pitch, Roll\n");
 
 	/* Now register to receive notifications when a new binary asynchronous
 	   packet is received. */
@@ -134,10 +136,16 @@ int main()
             }
             sleep(10);
         }
-
+        
+        while(writing)
+        {
+            sleep(1);
+        }
+        
 	errorCode = vn200_unregisterAsyncDataReceivedListener(&vn200, &asyncDataListener);
-	
+	//sleep(100);
 	errorCode = vn200_disconnect(&vn200);
+        fflush(stdout);
 	
 	if (errorCode != VNERR_NO_ERROR)
 	{
@@ -152,26 +160,29 @@ int main()
 
 void asyncDataListener(void* sender, VnDeviceCompositeData* data)
 {
+    writing = 1;
     struct timeval tv;
     gettimeofday(&tv, NULL);
 
 
-	  printf("%ld.%06ld, %" PRId64 ",  %" PRId64 ",  %5d,  %9f, %9f, %9f, %9f,  %.9f, %.9f, %.9f\n",
-	  
-	  (long) tv.tv_sec, 
-	  (long) tv.tv_usec,
-	  
-		data->timeStartup,	
-		data->timeGps,
-		data->insStatus,	
-		
-		data->quaternion.x,
-		data->quaternion.y,
-		data->quaternion.z,
-		data->quaternion.w,
-		
-		data->latitudeLongitudeAltitude.c0,
-		data->latitudeLongitudeAltitude.c1,
-		data->latitudeLongitudeAltitude.c2
-		);
+    printf("%ld.%06ld, %" PRId64 ",  %" PRId64 ",  %5d,  %9f, %9f, %9f, %9f,  %.9f, %.9f, %.9f\n",
+    
+    (long) tv.tv_sec, 
+    (long) tv.tv_usec,
+    
+        data->timeStartup,	
+        data->timeGps,
+        data->insStatus,	
+        
+        data->quaternion.x,
+        data->quaternion.y,
+        data->quaternion.z,
+        data->quaternion.w,
+        
+        data->latitudeLongitudeAltitude.c0,
+        data->latitudeLongitudeAltitude.c1,
+        data->latitudeLongitudeAltitude.c2
+        );
+    fflush(stdout);
+    writing = 0;
 }
