@@ -18,6 +18,7 @@
 const char* const COM_PORT = "//dev//ttyS0";
 const int BAUD_RATE = 115200;
 volatile int writing = 0;
+uint64_t gpsTime = 0;
 
 
 static int setupSig(void)
@@ -30,6 +31,7 @@ static int setupSig(void)
     sigaddset(&mask, SIGINT);
     sigaddset(&mask, SIGQUIT);
     sigaddset(&mask, SIGTERM);
+    sigaddset(&mask, SIGUSR1)
 
     /* Block signals so that they aren't handled
        according to their default dispositions */
@@ -131,6 +133,9 @@ int main()
                     case SIGTERM:
                         run = 0;
                         break;
+                    case SIGUSR1:
+                        fprintf(stderr, "%lld\n",gpsTime);
+                        break;
                     default: break;
                 }
             }
@@ -150,7 +155,6 @@ int main()
 	if (errorCode != VNERR_NO_ERROR)
 	{
 		printf("Error encountered when trying to disconnect from the sensor.\n");
-		
 		return 0;
 	}
 
@@ -163,7 +167,7 @@ void asyncDataListener(void* sender, VnDeviceCompositeData* data)
     writing = 1;
     struct timeval tv;
     gettimeofday(&tv, NULL);
-
+    gpsTime = date->timeGps;
 
     printf("%ld.%06ld, %" PRId64 ",  %" PRId64 ",  %5d,  %9f, %9f, %9f, %9f,  %.9f, %.9f, %.9f\n",
     
